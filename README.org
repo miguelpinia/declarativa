@@ -1,0 +1,6 @@
+#+title: Programación Declarativa
+#+author: Miguel Piña
+#+date: [2019-01-26 sáb 21:18]
+
+
+Repositorio de código para la asignatura de Programación Declarativa.
