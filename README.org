@@ -12,6 +12,6 @@ https://sites.google.com/ciencias.unam.mx/programaciondeclarativa2019-2/
 
 * Acerca de
 
-Profesor: Miguel Angel Piña Avelino - Lu, Mi, Vi - 10 a 11 LCC3
-Ayudante: Alejandro Hernández Mora - Ma, Ju 10 a 11 - LCC3
-Laboratorista: Pablo Gerardo González López - Mi 12 a 14 Taller de Lenguajes
+- Profesor: Miguel Angel Piña Avelino - Lu, Mi, Vi - 10 a 11 LCC3
+- Ayudante: Alejandro Hernández Mora - Ma, Ju 10 a 11 - LCC3
+- Laboratorista: Pablo Gerardo González López - Mi 12 a 14 Taller de Lenguajes
