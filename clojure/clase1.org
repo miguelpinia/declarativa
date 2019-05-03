@@ -1,0 +1,202 @@
+#+title: Clojure - Introducción
+#+author: Miguel Piña
+#+date: [2019-05-02 jue 17:34]
+
+* Introducción
+
+¿Qué vamos a hacer?
+- Crear un nuevo proyecto de Clojure con leiningen
+- A través del proyecto, construir un jar ejecutable
+- Ejecutar el archivo Jar
+- Ejecutar código en un REPL de Clojure
+
+* ¿Qué es Clojure?
+
+Clojure es un lenguaje creado por Rich Hickey. Es un lenguaje de programación
+general dinámico, haciendo énfasis en el paradigma funcional, con el objetivo de
+eliminar la complejidad asociada a la programación concurrente.
+
+Hay que entender que hay una diferencia cuando hablamos de Clojure, hay que
+mantener distinción entre el lenguaje de Clojure y el compilador de Clojure.
+
+El lenguaje es un dialecto de Lisp con énfasis en la programación funcional,
+mientras que el compilador está implementado en distintas plataformas, por
+ejemplo, Java, .Net o JavaScript. Esta distinción es necesaria porqué Clojure es
+un lenguaje alojado. Nosotros usaremos la implementación basada en Java.
+
+#+ATTR_ORG: :width 100px
+
+[[file:Clojure.png]]
+
+* Conceptos importantes previos
+
+- JVM ejecuta procesos basados en bytecode de Java.
+- Usualmente, el compilador de Java produce bytecode desde código fuente.
+- Los archivos Jar son colecciones de bytecode Java.
+- Los programas en java usualmente son distribuidos como archivos Jar.
+- El programa /clojure.jar/ lee código en Clojure y produce Java bytecode.
+- Ese bytecode java es ejecutado por la misma JVM que está ejecutando
+  /clojure.jar/.
+
+* Leiningen
+
+En estos días, la mayoría de los clojuristas usa Leiningen para construir y
+manejar sus proyectos. Nos vamos a enfocar en las siguientes cuatro tareas:
+
+- Crear un nuevo proyecto de Clojure
+- Ejecutar un proyecto de Clojure
+- Construir un proyecto de Clojure
+- Usar el REPL
+
+Leiningen necesita tener instalado Java 1.6 o posterior. Y hay que instalarlo
+siguiente las instrucciones que vienen en su página http://leiningen.org. Cuando
+se instala leiningen, automáticamente descarga el compilador de clojure.
+
+* Creando un nuevo proyecto
+
+Crear un nuevo proyecto es muy fácil. Un simple comando de leiningen crea el
+esqueleto de un proyecto. Para crear el primer proyecto en clojure, basta con
+escribir en una terminal:
+
+#+begin_src bash
+lein new app clojure-noob
+#+end_src
+
+El comando debería de crear una estructura de directorios que luce similar a
+esta:
+
+#+begin_src txt
+.
+├── CHANGELOG.md
+├── doc
+│   └── intro.md
+├── LICENSE
+├── project.clj
+├── README.md
+├── resources
+├── src
+│   └── clojure_noob
+│       └── core.clj
+└── test
+    └── clojure_noob
+        └── core_test.clj
+
+6 directories, 7 file
+#+end_src
+
+
+* Ejecutando el proyectos
+
+Ahora vamos a ejecutar el proyecto. Abra =src/clojure_noob/core.clj= en tu editor
+favorito. Deberías de ver algo como:
+
+#+begin_src clojure
+(ns clojure-noob.core
+  (:gen-class))
+
+(defn -main
+  "I don't do a whole lot ... yet."
+  [& args]
+  (println "Hello, World!"))
+#+end_src
+
+Para ejecutarlo, hay que ir a la carpeta del proyecto en la terminal y escribir:
+
+#+begin_src bash
+lein run
+#+end_src
+
+Modificamos la cadena "Hello, World!" por "I'm a little teapot"
+
+[[file:teapot.png]]
+
+* Construyendo el proyecto
+
+Una forma de compartir el trabajo que has realizado, es compartiendo un
+jar. Para crearlo ejecutamos:
+
+#+begin_src bash
+lein uberjar
+#+end_src
+
+Este comando crea el archivo
+target/uberjar/clojure-noob-0.1.0-SNAPSHOT-standalone.jar. Lo ejecutamos con
+Java de la siguiente forma:
+
+#+begin_src bash
+java -jar target/uberjar/clojure-noob-0.1.0-SNAPSHOT-standalone.jar
+#+end_src
+
+* Usando el REPL
+
+REPL es una herramienta para experimentar con el código. Te permite interactuar
+con un programa en ejecución y rápida intentar nuevas ideas. Esto es posible al
+proveer un prompt donde tu puedes ingresar código. Es entonces que lee tu código
+(/reads/), lo evalúa (/evaluates/), imprime el resultad (/prints/) y vuelve a repetir
+(/loops/), presentando el prompt de nuevo.
+
+Para iniciar un REPL, ejecutamos:
+
+#+begin_src bash
+lein repl
+#+end_src
+
+Esto debería darnos de salida algo como:
+
+#+begin_src txt
+$ lein repl
+nREPL server started on port 41199 on host 127.0.0.1 - nrepl://127.0.0.1:41199
+REPL-y 0.4.3, nREPL 0.6.0
+Clojure 1.10.0
+OpenJDK 64-Bit Server VM 1.8.0_191-8u191-b12-2ubuntu0.16.04.1-b12
+    Docs: (doc function-name-here)
+          (find-doc "part-of-name-here")
+  Source: (source function-name-here)
+ Javadoc: (javadoc java-object-or-class-here)
+    Exit: Control+D or (exit) or (quit)
+ Results: Stored in vars *1, *2, *3, an exception in *e
+
+clojure-noob.core=>
+#+end_src
+
+El prompt nos indica que ya está cargado el código en el REPL (nos muestra el
+/namespace/) y podemos ejecutar funciones que estén definidas en nuestro código.
+Ahora sólo podemos ejecutar la función main:
+
+#+begin_src txt
+clojure-noob.core=> (-main)
+Hello, World!
+nil
+clojure-noob.core=>
+#+end_src
+
+Podemos ejecutar funciones en el REPL
+
+#+begin_src txt
+clojure-noob.core=> (+ 1 2 3 4)
+10
+clojure-noob.core=> (* 1 2 3 4)
+24
+clojure-noob.core=> (first [1 2 3 4])
+1
+#+end_src
+
+Incluso podemos crear código más complicado, por ejemplo:
+
+#+begin_src clojure
+  (do (println "no prompt here!")
+      (+ 1 3))
+  ;; => no prompt here!
+  ;; => 4
+#+end_src
+
+* Editores
+
+En lo que resta del curso, voy a utilizar emacs + cider + clojure-mode para
+editar el código, pero algunos otros editores disponibles son:
+
+- Sublime Text https://www.youtube.com/watch?v=-FTHCAIcB1I
+- Vim http://mybuddymichael.com/writings/writing-clojure-with-vim-in-2013.html
+- Eclipse + Counterclockwise https://github.com/laurentpetit/ccw/wiki/GoogleCodeHome.
+- Cursive Clojure (basado en Intellij) https://cursiveclojure.com/
+- Nightcode https://github.com/oakes/Nightcode/
