@@ -1,0 +1,828 @@
+#+title: Haciendo cosas con Clojure
+#+author: Miguel Piña
+#+date: [2019-05-05 dom 19:33]
+#+setupfile: ~/proyectos/org-html-themes/setup/theme-bigblow.setup
+
+* Sintaxis
+
+Es hora de hacer cosas con clojure, para eso vamos a ver las estructuras de
+datos básicas de clojure, la sintaxis del lenguaje y las funciones dentro de
+Clojure.
+
+La sintaxis de Clojure es simple. Como todos los *Lisps*, emplea una estructura
+uniforme, un puñado de operadores especiales y un suministro constante de
+paréntesis entregados desde las minas de paréntesis ocultas debajo del MIT,
+donde nació Lisp.
+
+* Formas
+
+Todo el código de Clojure está escrito en una estructura uniforme. Clojure
+reconoce dos tipos de estructuras:
+
+- Representaciones literales de estructuras de datos (como números, cadenas,
+  mapas y vectores)
+- Operaciones
+
+Usamos el término forma para referirnos a un código válido. También a veces
+usaré expresión para referirme a las formas de Clojure. Pero no te obsesiones
+demasiado con la terminología. Clojure evalúa cada forma para producir un
+valor. Estas representaciones literales son todas formas válidas:
+
+#+begin_src clojure
+1
+"a string"
+["a" "vector" "of" "strings"]
+#+end_src
+
+* Formas
+
+Las operaciones son cómo haces las cosas. Todas las operaciones toman la forma
+de paréntesis de apertura, operador, operandos, paréntesis de cierre:
+
+#+begin_src clojure
+(operator operand1 operand2 ... operandn)
+(+ 1 2 3)
+; => 6
+
+(str "It was the panda " "in the library " "with a dust buster")
+; => "It was the panda in the library with a dust buster"
+#+end_src
+
+* Control de flujo
+
+Veamos tres operadores básicos de control de flujo: *if*, *do* y *when*.
+
+* if
+
+Esta es la estructura general de una expresión *if*:
+
+#+begin_src clojure
+
+(if boolean-form
+  then-form
+  optional-else-form)
+
+(if true
+  "By Zeus's hammer!"
+  "By Aquaman's trident!")
+; => "By Zeus's hammer!"
+
+(if false
+  "By Zeus's hammer!"
+  "By Aquaman's trident!")
+; => "By Aquaman's trident!"
+
+(if false
+  "By Odin's Elbow!")
+; => nil
+#+end_src
+
+* do
+
+El operador *do* le permite envolver múltiples formas entre paréntesis y
+ejecutar cada uno de ellos.
+
+#+begin_src clojure
+(if true
+  (do (println "Success!")
+      "By Zeus's hammer!")
+  (do (println "Failure!")
+      "By Aquaman's trident!"))
+; => Success!
+; => "By Zeus's hammer!"
+#+end_src
+
+* when
+
+El operador *when* es como una combinación de *if* y *do*, pero sin el *else*. Aquí hay
+un ejemplo:
+
+#+begin_src clojure
+(when true
+  (println "Success!")
+  "abra cadabra")
+; => Success!
+; => "abra cadabra"
+#+end_src
+
+Utilice *when*, si se quieren hacer varias cosas cuando se cumpla alguna
+condición, y siempre quieras devolver el valor nil cuando la condición sea
+falsa.
+
+* nil, true, false, veracidad, igualdad, y expresiones booleanas
+
+Clojure tiene valores true y false. *nil* se utiliza para indicar que no hay valor
+en Clojure. Puede verificar si un valor es *nil* con el nombre apropiado nil?
+función:
+
+#+begin_src clojure
+(nil? 1)
+; => false
+
+(nil? nil)
+; => true
+#+end_src
+
+Tanto *nil* como *false* se utilizan para representar falsedad lógica, mientras que
+todos los demás valores son lógicamente veraces.
+
+#+begin_src clojure
+(if "bears eat beets"
+  "bears beets Battlestar Galactica")
+; => "bears beets Battlestar Galactica"
+
+(if nil
+  "This won't be the result because nil is falsey"
+  "nil is false")
+; => "nil is false
+#+end_src
+
+
+* nil, true, false, veracidad, igualdad, y expresiones booleanas
+
+El operador de igualdad de Clojure es =
+
+#+begin_src clojure
+(= 1 1)
+; => true
+(= nil nil)
+; => true
+(= 1 2)
+; => false
+(not= 1 2)
+#+end_src
+
+* nil, true, false, veracidad, igualdad, y expresiones booleanas
+
+
+Clojure utiliza los operadores booleanos *or* y *and*. *or* devuelve el primer valor de
+verdad o el último valor. *and* devuelve el primer valor falso o, si no hay valores
+false, el último valor verdadero.
+
+Or
+#+begin_src clojure
+(or false nil :large_I_mean_venti :why_cant_I_just_say_large)
+; => :large_I_mean_venti
+
+(or (= 0 1) (= "yes" "no"))
+; => false
+
+(or nil)
+; => nil
+#+end_src
+
+And
+#+begin_src clojure
+(and :free_wifi :hot_coffee)
+; => :hot_coffee
+
+(and :feelin_super_cool nil false)
+; => nil
+#+end_src
+
+* Nombrando valores con def
+
+Podemos utilizar def para asignarle un nombre a un valor en Clojure:
+
+#+begin_src clojure
+(def failed-protagonist-names
+  ["Larry Potter" "Doreen the Explorer" "The Incredible Bulk"])
+
+failed-protagonist-names
+; => ["Larry Potter" "Doreen the Explorer" "The Incredible Bulk"]
+#+end_src
+
+Uno podría verse tentado a hacer algo como esto:
+
+
+#+begin_src clojure
+(def severity :mild)
+(def error-message "OH GOD! IT'S A DISASTER! WE'RE ")
+(if (= severity :mild)
+  (def error-message (str error-message "MILDLY INCONVENIENCED!"))
+  (def error-message (str error-message "DOOOOOOOMED!")))
+#+end_src
+
+En lugar de eso, podemos escribir una función que evite hacer lo anterior:
+
+#+begin_src clojure
+(defn error-message
+  [severity]
+  (str "OH GOD! IT'S A DISASTER! WE'RE "
+       (if (= severity :mild)
+         "MILDLY INCONVENIENCED!"
+         "DOOOOOOOMED!")))
+
+(error-message :mild)
+; => "OH GOD! IT'S A DISASTER! WE'RE MILDLY INCONVENIENCED!"
+#+end_src
+
+* Números
+
+Clojure ofrece soporte para trabajar con enteros, flotantes y razones:
+
+#+begin_src clojure
+93
+1.2
+1/5
+#+end_src
+
+* Cadenas
+
+Las cadenas permiten representar texto.
+
+#+begin_src clojure
+"Lord Voldemort"
+"\"He who must not be named\""
+"\"Great cow of Moscow!\" - Hermes Conrad"
+#+end_src
+
+#+begin_src clojure
+(def name "Chewbacca")
+(str "\"Uggllglglglglglglglll\" - " name)
+; => "Uggllglglglglglglglll" - Chewbacca
+#+end_src
+
+* Mapas
+
+Los mapas son similares a los diccionarios o hashes en otros lenguajes. Son una
+forma de asociar algún valor con otro valor. Los dos tipos de mapas en Clojure
+son hash-maps y sorted-maps. Solo cubriré los hash-maps más
+básicos. Veamos algunos ejemplos de literales de mapas.
+
+#+begin_src clojure
+{}
+{:first-name "Charlie"
+ :last-name  "McFishwich"}
+
+{"string-key" +}
+
+{:name {:first "John" :middle "Jacob" :last "Jingleheimerschmidt"}}
+
+(hash-map :a 1 :b 2)o
+; => {:a 1 :b 2}
+#+end_src
+
+Para obtener un valor asociado a un mapa, podemos usar la función *get* para
+obtenerlo:
+
+#+begin_src clojure
+(get {:a 0 :b 1} :b)
+; => 1
+
+(get {:a 0 :b {:c "ho hum"}} :b)
+; => {:c "ho hum"}
+#+end_src
+
+* Mapas
+
+*get* devolverá nil si no encuentra la llave, o puedes darle un valor
+predeterminado para devolver, como "unicorns?":
+
+#+begin_src clojure
+(get {:a 0 :b 1} :c)
+; => nil
+
+(get {:a 0 :b 1} :c "unicorns?")
+; => "unicorns?"
+#+end_src
+
+Con get-in podemos obtener valores en mapas anidados:
+
+#+begin_src clojure
+(get-in {:a 0 :b {:c "ho hum"}} [:b :c])
+; => "ho hum"
+#+end_src
+
+Otra forma de obtener un valor de un mapa, es tratar el mapa como una función
+con la llave cómo argumento:
+
+#+begin_src clojure
+({:name "The Human Coffeepot"} :name)
+; => "The Human Coffeepot"
+#+end_src
+
+* Keywords
+
+Son estructuras que permiten representar un valor asociado con el nombre dado.
+
+#+begin_src clojure
+:a
+:rumplestiltsken
+:34
+:_?
+#+end_src
+
+Los keywords pueden ser utilizados como funciones para buscar un valor en una
+estructura de datos.
+
+#+begin_src clojure
+(:a {:a 1 :b 2 :c 3})
+; => 1
+;; Equivalente a
+(get {:a 1 :b 2 :c 3} :a)
+; => 1
+;; También podemos proveer valores por defecto
+(:d {:a 1 :b 2 :c 3} "No gnome knows homes like Noah knows")
+; => "No gnome knows homes like Noah knows"
+#+end_src
+
+* Vectores
+
+Un vector es similar a un arreglo, en el sentido de que es una colección
+indexada en 0.
+
+#+begin_src clojure
+[3 2 1]
+;; Podemos obtener el elemtento 0th
+(get [3 2 1] 0)
+; => 3
+(get ["a" {:name "Pugsley Winterbottom"} "c"] 1)
+; => {:name "Pugsley Winterbottom"}
+#+end_src
+
+Podemos crear vectores con la función vector
+
+#+begin_src clojure
+(vector "creepy" "full" "moon")
+; => ["creepy" "full" "moon"]
+#+end_src
+
+Podemos usar la función conj para agregar elementos al final del vector
+
+#+begin_src clojure
+(conj [1 2 3] 4)
+; => [1 2 3 4]
+#+end_src
+
+* Listas
+
+Las listas son similares a los vectores en que son colecciones lineales de
+valores. Pero hay algunas diferencias. Por ejemplo, no puede recuperar elementos
+de la lista con *get*. Para escribir una lista literal, simplemente agregue los
+elementos entre paréntesis y use una comilla simple al principio
+
+#+begin_src clojure
+'(1 2 3 4)
+; => (1 2 3 4)
+;; Para obtener los elementos en la n-ésima posición usamos nth
+(nth '(:a :b :c) 0)
+; => :a
+(nth '(:a :b :c) 2)
+; => :c
+#+end_src
+
+Podemos crear listas con la función list
+
+#+begin_src clojure
+(list 1 "two" {3 4})
+; => (1 "two" {3 4})
+#+end_src
+
+Podemos usar la función conj para agregar elementos al principio de la listas
+
+#+begin_src clojure
+(conj '(1 2 3) 4)
+; => (4 1 2 3)
+#+end_src
+
+* Conjuntos
+
+Los conjuntos son colecciones de valores únicos. Clojure tiene dos tipos de
+conjuntos: hash-sets y ordered-sets
+
+#+begin_src clojure
+#{"kurt vonnegut" 20 :icicle}
+
+(hash-set 1 1 2 2)
+; => #{1 2}
+
+(conj #{:a :b} :b)
+; => #{:a :b}
+
+(set [3 3 3 4 4])
+; => #{3 4}
+#+end_src
+
+Podemos preguntar la existencia de un elemento dentro de un conjunto usando la
+función *contains?*
+
+#+begin_src clojure
+(contains? #{:a :b} :a)
+; => true
+(contains? #{:a :b} 3)
+; => false
+(contains? #{nil} nil)
+; => true
+#+end_src
+
+Y para obtener un elemento, podemos usar keywords para obtenerlo o la función
+get
+
+#+begin_src clojure
+(:a #{:a :b})
+; => :a
+(get #{:a :b} :a)
+; => :a
+(get #{:a nil} nil)
+; => nil
+(get #{:a :b} "kurt vonnegut")
+; => nil
+#+end_src
+
+* Funciones
+
+Una de las razones por las que las personas se vuelven locas con los lenguajes
+basados en Lisp, es que estos lenguajes te permiten crear programas que se
+comportan de formas complejas, pero el bloque de construcción principal, la
+función, es muy simple. Esta sección lo inicia en la belleza y la elegancia de
+las funciones de Lisp explicando lo siguiente:
+
+- Invocando funciones
+- Cómo difieren las funciones de las macros y las formas especiales
+- Definiendo funciones
+- Funciones anonimas
+- Funciones de retorno
+
+* Invocando una función
+
+
+Recuerde que todas las operaciones de Clojure tienen la misma sintaxis:
+paréntesis de apertura, operador, operandos, paréntesis de cierre. La llamada a
+función es solo otro término para una operación donde el operador es una función
+o una expresión de función (una expresión que devuelve una función).
+
+Esto te permite escribir un código bastante interesante. Aquí hay una expresión
+de función que devuelve la función + (adición):
+
+#+begin_src clojure
+(or + -)
+; => #<core$_PLUS_ clojure.core$_PLUS_@76dace31>
+((or + -) 1 2 3)
+; => 6
+;; Un par más
+((and (= 1 1) +) 1 2 3)
+ ; => 6
+((first [+ 0]) 1 2 3)
+; => 6
+#+end_src
+
+¡La flexibilidad de la función no termina con la expresión de función!
+Sintácticamente, las funciones pueden tomar cualquier expresión como argumentos,
+incluidas otras funciones. Las funciones que pueden tomar una función como
+argumento o devolver una función se denominan *funciones de orden superior*. Se
+dice que los lenguajes de programación con funciones de orden superior son
+compatibles con *funciones de primera clase* porque puede tratar las *funciones
+como valores* de la misma manera que trata tipos de datos más conocidos como
+números y vectores.
+
+El soporte de Clojure para *funciones de primera clase* le permite crear
+abstracciones más potentes de lo que se puede en lenguajes sin ellas. Aquellos
+que no  están familiarizados con este tipo de programación, piensan que las funciones le
+permiten generalizar operaciones sobre instancias de datos. Por ejemplo, la
+función + abstrae la adición sobre cualquier número específico de elementos.
+
+* Macros y formas especiales
+
+* Definiendo funciones
+
+Las definiciones de funciones se componen de cinco partes principales:
+
+- defn
+- Nombre de la función
+- Una cadena documental que describe la función - Docstring (opcional)
+- Parámetros listados entre paréntesis
+- Cuerpo de la funcion
+
+#+begin_src clojure
+➊ (defn too-enthusiastic
+➋   "Return a cheer that might be a bit too enthusiastic"
+➌   [name]
+➍   (str "OH. MY. GOD! " name " YOU ARE MOST DEFINITELY LIKE THE BEST "
+  "MAN SLASH WOMAN EVER I LOVE YOU AND WE SHOULD RUN AWAY SOMEWHERE"))
+
+(too-enthusiastic "Zelda")
+#+end_src
+
+Las funciones también soportan la sobrecarga de aridad. Esto significa que puede
+definir una función para que se ejecute un cuerpo de función diferente
+dependiendo de la aridad. Aquí está la forma general de una definición de
+función de aridad múltiple.
+
+#+begin_src clojure
+(defn multi-arity
+  ;; 3-arity arguments and body
+  ([first-arg second-arg third-arg]
+     (do-things first-arg second-arg third-arg))
+  ;; 2-arity arguments and body
+  ([first-arg second-arg]
+     (do-things first-arg second-arg))
+  ;; 1-arity arguments and body
+  ([first-arg]
+     (do-things first-arg)))
+#+end_src
+
+* Sobrecarga de aridad
+
+La sobrecarga de aridad es una forma de proporcionar valores predeterminados
+para argumentos
+
+#+begin_src clojure
+(defn x-chop
+  "Describe the kind of chop you're inflicting on someone"
+  ([name chop-type]
+     (str "I " chop-type " chop " name "! Take that!"))
+  ([name]
+     (x-chop name "karate")))
+(x-chop "Kanye West" "slap")
+; => "I slap chop Kanye West! Take that!"
+(x-chop "Kanye East")
+; => "I karate chop Kanye East! Take that!"
+#+end_src
+
+Clojure también le permite definir funciones de aridad variable al incluir un
+parámetro de resto,  en el sentido de "poner el resto de estos argumentos en una
+lista con el siguiente nombre". El parámetro de resto se indica con un &
+
+#+begin_src clojure
+(defn codger-communication
+  [whippersnapper]
+  (str "Get off my lawn, " whippersnapper "!!!"))
+
+(defn codger
+   [& whippersnappers]
+  (map codger-communication whippersnappers))
+
+(codger "Billy" "Anne-Marie" "The Incredible Bulk")
+;  => ("Get off my lawn, Billy!!!"
+;      "Get off my lawn, Anne-Marie!!!"
+;      "Get off my lawn, The Incredible Bulk!!!")
+#+end_src
+
+También podemos mezclar parámetros normales con parámetros de resto
+
+#+begin_src clojure
+(defn favorite-things
+  [name & things]
+  (str "Hi, " name ", here are my favorite things: "
+       (clojure.string/join ", " things)))
+
+(favorite-things "Doreen" "gum" "shoes" "kara-te")
+; => "Hi, Doreen, here are my favorite things: gum,
+#+end_src
+
+
+* Destructuring
+La idea básica detrás de la desestructuración es que le permite unir
+concisamente nombres a valores dentro de una colección. Veamos un ejemplo:
+
+#+begin_src clojure
+;; Return the first element of a collection
+(defn my-first
+  [[first-thing]] ; Notice that first-thing is within a vector
+  first-thing)
+
+(my-first ["oven" "bike" "war-axe"])
+; => "oven"
+#+end_src
+
+#+begin_src clojure
+(defn chooser
+  [[first-choice second-choice & unimportant-choices]]
+  (println (str "Your first choice is: " first-choice))
+  (println (str "Your second choice is: " second-choice))
+  (println (str "We're ignoring the rest of your choices. "
+                "Here they are in case you need to cry over them: "
+                (clojure.string/join ", " unimportant-choices))))
+
+(chooser ["Marmalade", "Handsome Jack", "Pigpen", "Aquaman"])
+;  => Your first choice is: Marmalade
+;  => Your second choice is: Handsome Jack
+;  => We're ignoring the rest of your choices. Here they are in case \
+;     you need to cry over them: Pigpen, Aquaman
+#+end_src
+
+
+También podemos aplicar el destructuring a mapas
+
+#+begin_src clojure
+(defn announce-treasure-location
+   [{lat :lat lng :lng}]
+  (println (str "Treasure lat: " lat))
+  (println (str "Treasure lng: " lng)))
+
+(announce-treasure-location {:lat 28.22 :lng 81.33})
+; => Treasure lat: 100
+; => Treasure lng: 50
+#+end_src
+
+
+Puede conservar el acceso al argumento del mapa original usando :as keyword.
+
+#+begin_src clojure
+(defn receive-treasure-location
+  [{:keys [lat lng] :as treasure-location}]
+  (println (str "Treasure lat: " lat))
+  (println (str "Treasure lng: " lng))
+  ;; One would assume that this would put in new coordinates for your ship
+  (steer-ship! treasure-location))
+#+end_src
+
+* Cuerpo de la función
+
+El cuerpo de la función puede contener formas de cualquier tipo. Clojure
+devuelve automáticamente la último forma evaluada.
+
+#+begin_src clojure
+(defn illustrative-function
+  []
+  (+ 1 304)
+  30
+  "joe")
+(illustrative-function)
+; => "joe"
+(defn number-comment
+  [x]
+  (if (> x 6)
+    "Oh my gosh! What a big number!"
+    "That number's OK, I guess"))
+
+(number-comment 5)
+; => "That number's OK, I guess"
+
+(number-comment 7)
+; => "Oh my gosh! What a big number!"
+#+end_src
+
+* Funciones anónimas
+
+EN clojure las funciones no necesitan tener nombre
+
+#+begin_src clojure
+(fn [param-list]
+  function body)
+
+(map (fn [name] (str "Hi, " name))
+     ["Darth Vader" "Mr. Magoo"])
+; => ("Hi, Darth Vader" "Hi, Mr. Magoo")
+
+((fn [x] (* x 3)) 8)
+; => 24
+#(* % 3)
+(#(* % 3) 8)
+; => 24
+(map #(str "Hi, " %)
+     ["Darth Vader" "Mr. Magoo"])
+; => ("Hi, Darth Vader" "Hi, Mr. Magoo")
+#+end_src
+
+Como ya habrán adivinado, el signo de porcentaje %, indica el argumento pasado a
+la función. Si su función anónima toma múltiples argumentos, puede distinguirlos
+de esta manera: %1, %2,% 3, etc. % es equivalente a %1:
+
+#+begin_src clojure
+(#(str %1 " and " %2) "cornbread" "butter beans")
+; => "cornbread and butter beans"
+#+end_src
+
+También se pueden pasar parámetros de resto con %&:
+
+#+begin_src clojure
+(#(identity %&) 1 "blarg" :yip)
+; => (1 "blarg" :yip)
+#+end_src
+
+* Regresando funciones
+
+También es posible que se regresen funciones dentro de otras funciones:
+
+#+begin_src clojure
+(defn inc-maker
+  "Create a custom incrementor"
+  [inc-by]
+  #(+ % inc-by))
+
+(def inc3 (inc-maker 3))
+
+(inc3 7)
+; => 10
+#+end_src
+
+* Let
+
+Dentro de una forma, *let* permite asociar un valor a un nombre de forma similar a
+*def*, sin embargo, el alcance del valor está limitado a la forma.
+
+#+begin_src clojure
+(let [x 3]
+  x)
+; => 3
+
+(def dalmatian-list
+  ["Pongo" "Perdita" "Puppy 1" "Puppy 2"])
+(let [dalmatians (take 2 dalmatian-list)]
+  dalmatians)
+; => ("Pongo" "Perdita")
+#+end_src
+
+*let* también permite definir un nuevo alcance
+
+#+begin_src clojure
+(def x 0)
+(let [x (inc x)] x)
+; => 1
+#+end_src
+
+También podemos usar parámetros de resto con let
+
+#+begin_src clojure
+(let [[pongo & dalmatians] dalmatian-list]
+  [pongo dalmatians])
+; => ["Pongo" ("Perdita" "Puppy 1" "Puppy 2")]
+#+end_src
+
+* Loop
+
+También podemos implementar ciclos con *loop*
+
+#+begin_src clojure
+(loop [iteration 0]
+  (println (str "Iteration " iteration))
+  (if (> iteration 3)
+    (println "Goodbye!")
+    (recur (inc iteration))))
+#+end_src
+
+Podemos hacer lo mismo con una función recursiva
+
+#+begin_src clojure
+(defn recursive-printer
+  ([]
+     (recursive-printer 0))
+  ([iteration]
+     (println iteration)
+     (if (> iteration 3)
+       (println "Goodbye!")
+       (recursive-printer (inc iteration)))))
+(recursive-printer)
+#+end_src
+
+* Expresiones regulares
+
+La notación para una expresión regular, es una cadena precedida por un símbolo
+hash
+
+#+begin_src clojure
+(re-find #"^left-" "left-eye")
+; => "left-"
+
+(re-find #"^left-" "cleft-chin")
+; => nil
+
+(re-find #"^left-" "wongleblart")
+; => nil
+#+end_src
+
+
+
+* Ejemplo completo
+
+#+begin_src clojure
+(def asym-hobbit-body-parts [{:name "head" :size 3}
+                             {:name "left-eye" :size 1}
+                             {:name "left-ear" :size 1}
+                             {:name "mouth" :size 1}
+                             {:name "nose" :size 1}
+                             {:name "neck" :size 2}
+                             {:name "left-shoulder" :size 3}
+                             {:name "left-upper-arm" :size 3}
+                             {:name "chest" :size 10}
+                             {:name "back" :size 10}
+                             {:name "left-forearm" :size 3}
+                             {:name "abdomen" :size 6}
+                             {:name "left-kidney" :size 1}
+                             {:name "left-hand" :size 2}
+                             {:name "left-knee" :size 2}
+                             {:name "left-thigh" :size 4}
+                             {:name "left-lower-leg" :size 3}
+                             {:name "left-achilles" :size 1}
+                             {:name "left-foot" :size 2}])
+
+
+(defn matching-part
+  [part]
+  {:name (clojure.string/replace (:name part) #"^left-" "right-")
+   :size (:size part)})
+
+(defn symmetrize-body-parts
+  "Expects a seq of maps that have a :name and :size"
+  [asym-body-parts]
+   (loop [remaining-asym-parts asym-body-parts
+         final-body-parts []]
+     (if (empty? remaining-asym-parts)
+      final-body-parts
+       (let [[part & remaining] remaining-asym-parts]
+         (recur remaining
+               (into final-body-parts
+                     (set [part (matching-part part)])))))))
+#+end_src

@@ -1,0 +1,30 @@
+#+title: Proyectos
+#+author: Miguel Piña
+#+date: [2019-05-06 lun 09:02]
+#+setupfile: ~/proyectos/org-html-themes/setup/theme-bigblow.setup
+
+* Proyectos
+
+** Clojure, Haskell, Prolog
+- Motor de ajedrez
+- IA para poker / Juegos de cartas
+- Sudoku
+- Tic-tac-toe (gato)
+- Probador de teoremas
+- Aplicaciones web
+
+** Clojurescript
+- Single Web Page (clon de twitter, facebook)
+
+
+
+* Temas de exposición
+
+- Pruebas generativas (Clojure)
+- Pruebas generativas (Haskell)
+- Programación lógica en lenguajes de programación no lógicos (minikanren)
+- Transducers en Clojure
+- Clojure Spec
+- Programación reactiva (Haskell)
+- Ingenieria de software con Haskell (manejo de paquetes, debuggers, etc).
+- Programación paralela y concurrente en Haskell
