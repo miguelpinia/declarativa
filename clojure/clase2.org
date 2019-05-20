@@ -655,7 +655,6 @@ devuelve automáticamente la último forma evaluada.
 #+end_src
 
 * Funciones anónimas
-
 EN clojure las funciones no necesitan tener nombre
 
 #+begin_src clojure
@@ -691,6 +690,7 @@ También se pueden pasar parámetros de resto con %&:
 (#(identity %&) 1 "blarg" :yip)
 ; => (1 "blarg" :yip)
 #+end_src
+
 
 * Regresando funciones
 

@@ -1,0 +1,405 @@
+#+title: Lectura, evaluación y macros
+#+author: Miguel Piña
+#+date: [2019-05-19 dom 18:33]
+
+* Introducción
+
+Los macros permiten evaluar expresiones arbitrarias en código Clojure
+válido, así que se puede extender el lenguaje de acuerdo a las
+necesidades de cada quien. Para observar esto, consideremos el
+siguiente macro trivial:
+
+#+begin_src clojure
+(defmacro backwards
+  [form]
+  (reverse form))
+
+(backwards (" backwards" " am" "I" str))
+; => "I am backwards"
+#+end_src
+
+* Introducción
+
+
+El macro *backwards* permite a Clojure evaluar con éxito la expresión
+=(" backwards" "am" "I" str)=, aunque no sigue las reglas de sintaxis
+ de Clojure, que requieren que el operando de una expresión aparezca
+primero.
+
+* Una revisión al modelo de evaluación de Clojure
+
+
+Clojure (como todos los Lisps) tiene un modelo de evaluación que
+difiere de la mayoría de los otros lenguajes: tiene un sistema de dos
+fases en el que primero lee el código fuente y después produce
+estructuras de datos de Clojure.
+
+Estas estructuras de datos se evalúan de la siguiente forma: Clojure
+atraviesa las estructuras de datos y realiza acciones como la
+aplicación de funciones o la búsqueda de variables según el tipo de
+estructura de datos.
+
+Por ejemplo, cuando Clojure lee el texto =(+ 1 2)=, el resultado es una
+estructura de datos de tipo lista cuyo primer elemento es un símbolo
+=+=, seguido de los números =1= y =2=. Esta estructura de datos se pasa al
+evaluador de Clojure, que busca la función correspondiente a =+= y
+aplica esa función a =1= y =2=.
+
+* Homoiconicidad
+
+Los idiomas que tienen esta relación entre el código fuente, los datos
+y la evaluación se denominan homoicónicos. (Por cierto, si dice
+homoicónico frente al espejo del baño tres veces con las luces
+apagadas a las tres de la mañana, el fantasma de John McCarthy aparece
+y te da unos paréntesis). Los lenguajes homocónicos le permiten razonar
+sobre el código como un conjunto de estructuras de datos que se
+pueden manipular algorítmicamente. Para poner esto en contexto,
+hagamos una excursión a través de la tierra de la compilación.
+
+* AST
+
+Los lenguajes de programación requieren un compilador o intérprete
+para traducir el código que escribimos, consistente en caracteres
+Unicode en otra cosa, por ejemplo: instrucciones de la máquina, código
+en otro lenguaje de programación, lo que sea. Durante este proceso, el
+compilador construye un árbol de sintaxis abstracta (AST), que es una
+estructura de datos que representa su programa. Puede pensar en el AST
+como la entrada al evaluador, que puede considerarse como una función
+que atraviesa el árbol para producir el código de la máquina o lo que
+sea su salida.
+
+[[file:non-lisp-eval.png]]
+
+* AST
+
+Pero Clojure es diferente, porque Clojure es un Lisp. En lugar de
+evaluar una AST que se representa como una estructura de datos interna
+inaccesible, Lisps evalúa las estructuras de datos nativas. Clojure
+todavía evalúa las estructuras de los árboles, pero los árboles se
+estructuran utilizando listas de Clojure y los nodos son valores de
+Clojure.
+
+Las listas son ideales para construir estructuras de árboles. El
+primer elemento de una lista se trata como la raíz, y cada elemento
+posterior se trata como una rama. Para crear un árbol anidado, puedes
+usar listas anidadas.
+
+[[file:trees.png]]
+
+* S-Expressions
+
+En tus aventuras de Lisp, encontrarás recursos que explican que Lisps
+evalúa las s-expressions. Este término es ambiguo:  se usa para
+referirse tanto al objeto de datos real que se evalúa como al
+código fuente que representa esos datos. El uso del mismo término para
+dos componentes diferentes de la evaluación de Lisp (código y datos)
+oculta lo que es importante: su texto representa estructuras de datos
+nativas, y Lisps evalúa estructuras de datos nativas, lo cual es único
+e impresionante.
+
+* AST
+
+Ahora veamos como se ve el proceso de evaluación de Clojure.
+
+[[file:lisp-eval.png]]
+
+
+* Evaluación
+
+Sin embargo, al evaluador no le importa realmente de dónde proviene su
+entrada; no tiene que venir del lector. Como resultado, puede enviar
+las estructuras de datos de su programa directamente al evaluador de
+Clojure con eval.
+
+#+begin_src clojure
+(def addition-list (list + 1 2))
+(eval addition-list)
+; => 3
+#+end_src
+
+El programa acaba de evaluar una lista de Clojure. Brevemente, esto
+es lo que sucedió: cuando Clojure evaluó la lista, buscó la lista a la
+que se refiere el término *addition-list*; luego buscó la función
+correspondiente al símbolo =+=; y luego llamó a esa función con =1= y =2=
+como argumentos, devolviendo =3=. Las estructuras de datos de su
+programa en ejecución y las del evaluador viven en el mismo espacio, y
+el resultado es que puede usar todo el poder de Clojure y todos los
+recursos.
+
+* Evaluación
+
+Veamos otro ejemplo:
+
+#+begin_src clojure
+(eval (concat addition-list [10]))
+; => 13
+
+(eval (list 'def 'lucky-number (concat addition-list [10])))
+; => #'user/lucky-number
+
+lucky-number
+; => 13
+#+end_src
+
+[[file:data-to-eval.png]]
+
+* Evaluación
+
+¡El programa puede hablar directamente con su propio evaluador,
+utilizando sus propias funciones y datos para modificarse a medida que
+se ejecuta!
+
+Por lo tanto, Clojure es homoicónico: representa árboles de sintaxis
+abstractos usando listas, y escribimos representaciones textuales
+de listas cuando escribimos código en Clojure. Debido a que el código
+que escribimos representa las estructuras de datos que está acostumbrado
+a manipular y el evaluador consume esas estructuras de datos, es fácil
+razonar acerca de cómo modificar su programa mediante programación.
+Con esto, las macros son las que te permiten realizar esas
+manipulaciones fácilmente.
+
+* El lector (The Reader)
+
+El lector (The reader) convierte el código fuente que guardamos
+en un archivo o ingresamos en el REPL, en estructuras de datos de
+Clojure. Es como un traductor entre el mundo humano de caracteres
+Unicode y el mundo de listas, vectores, mapas, símbolos y otras
+estructuras de datos de Clojure.
+
+* Leyendo (Reading)
+
+Para entender la lectura, primero veamos de cerca cómo Clojure maneja
+el texto que escribe en el REPL. Primero, el REPL le pide texto:
+
+#+begin_src clojure
+user=>
+#+end_src
+
+Entonces inrgresamos algo de texto
+
+#+begin_src clojure
+user=> (str "To understand what recursion is," " you must first understand recursion.")
+#+end_src
+
+Ese texto es realmente solo una secuencia de caracteres Unicode, pero
+pretende representar una combinación de estructuras de datos de
+Clojure. Esta representación textual de las estructuras de datos se
+denomina *reader form* . En este ejemplo, el formulario representa
+una estructura de datos de lista que contiene tres formas más: el
+símbolo str y dos cadenas.
+
+Una vez que escribe esos caracteres en el prompt y presiona enter,
+ese texto va al lector (recuerde que REPL significa
+read-eval-print-loop). Clojure lee la secuencia de caracteres y
+produce internamente las estructuras de datos correspondientes. Luego
+evalúa las estructuras de datos e imprime la representación textual
+del resultado:
+
+#+begin_src clojure
+"To understand what recursion is, you must first understand recursion."
+#+end_src
+
+* Leyendo
+
+La lectura y la evaluación son procesos discretos que puede realizar
+de manera independiente. Una forma de interactuar directamente con el
+*reader* es mediante la función de cadena de lectura. *read-string* toma
+una cadena como argumento y la procesa utilizando el lector de
+Clojure, devolviendo una estructura de datos:
+
+#+begin_src clojure
+(read-string "(+ 1 2)")
+; => (+ 1 2)
+
+(list? (read-string "(+ 1 2)"))
+; => true
+
+(conj (read-string "(+ 1 2)") :zagglewag)
+; => (:zagglewag + 1 2)
+#+end_src
+
+También podemos evaluar lo anterior si queremos
+
+#+begin_src clojure
+(eval (read-string "(+ 1 2)"))
+; => 3
+#+end_src
+
+* Leyendo
+
+Sin embargo, el lector puede emplear un comportamiento más complejo al
+convertir texto en estructuras de datos. Por ejemplo, ¿recuerdas las
+funciones anónimas?
+
+#+begin_src clojure
+(#(+ 1 %) 3)
+; => 4
+#+end_src
+
+Intentemos esto
+
+#+begin_src clojure
+(read-string "#(+ 1 %)")
+; => (fn* [p1__423#] (+ 1 p1__423#))
+#+end_src
+
+Esta no es la asignación uno a uno a la que estamos acostumbrados. La
+lectura # (+ 1%) de alguna manera dio como resultado una lista que
+consta del símbolo fn *, un vector que contiene un símbolo y una lista
+que contiene tres elementos. ¿Qué acaba de suceder?
+
+* Reader Macros
+
+Responderé a mi propia pregunta: el lector usó una reader macro
+para transformar #(+ 1 %). Las reader macros son conjuntos de
+reglas para transformar texto en estructuras de datos. A menudo le
+permiten representar estructuras de datos de forma más compacta porque
+toman una forma abreviada de lector y la expanden en una forma
+completa. Están designados por caracteres de macro, como '(la comilla
+simple), # y @. También son completamente diferentes de las macros a
+las que llegaremos más adelante. Para no confundirnos, siempre
+me referiré a las reader macros utilizando reader macro
+de forma completa.
+
+
+Por ejemplo, podemos ver cómo el reader macro expande el
+carácter de comillas simples aquí:
+
+#+begin_src clojure
+(read-string "'(a b c)")
+; => (quote (a b c))
+#+end_src
+
+Las reader macros también pueden hacer cosas locas como hacer que
+el texto sea ignorado. El punto y coma designa la macro del lector de
+comentarios de una sola línea:
+
+#+begin_src clojure
+(read-string "; ignore!\n(+ 1 2)")
+; => (+ 1 2)
+#+end_src
+
+* El evaluador (The evaluator)
+
+Puede pensar en el evaluador de Clojure como una función que toma una
+estructura de datos como un argumento, procesa la estructura de datos
+utilizando las reglas correspondientes al tipo de estructura de datos
+y devuelve un resultado. Para evaluar un símbolo, Clojure busca a qué
+se refiere el símbolo. Para evaluar una lista, Clojure mira el primer
+elemento de la lista y llama a una función, macro o formulario
+especial. Cualquier otro valor (incluidas cadenas, números y keywords)
+simplemente se evalúa a sí mismos.
+
+* Símbolos
+
+Una de sus tareas fundamentales como programador es crear abstracciones
+al asociar nombres con valores. Aprendimos a hacer esto
+usando definiciones de *def*, *let* y *function*. Clojure usa símbolos para
+nombrar funciones, macros, datos y cualquier otra cosa que pueda usar,
+y los evalúa resolviéndolos. Para resolver un símbolo, Clojure
+atraviesa todos los enlaces que ha creado y luego busca la entrada del
+símbolo en un mapeo de espacio de nombres.
+
+En general, Clojure resuelve un símbolo por:
+
+- Buscando si el símbolo nombra una forma especial. Si no lo hace..
+- Buscando si el símbolo corresponde a una asociación local. Si no lo
+  hace...
+- Tratando de encontrar un mapeo de espacios de nombres introducido
+  por *def*. Si no lo hace...
+- Lanza una excepción
+
+* Símbolos
+
+Veamos primero un símbolo que se resuelve en una forma especial. Las
+formas especiales, como *if*, siempre se usen en el contexto de una
+operación; siempre son el primer elemento de una lista:
+
+#+begin_src clojure
+(if true :a :b)
+; => :a
+#+end_src
+
+En este caso, el *if* es una forma especial y se está utilizando como
+operador. Si intenta referirse a un forma especial fuera de este
+contexto, obtendrá una excepción:
+
+#+begin_src clojure
+if
+; => CompilerException java.lang.RuntimeException: Unable to resolve symbol: if in this context, compiling:(NO_SOURCE_PATH:0:0)
+#+end_src
+
+* Símbolos
+
+A continuación, vamos a evaluar algunos asociaciones locales. Una
+asociación local es cualquier asociación entre un símbolo y un valor
+que no fue creado por def. En el siguiente ejemplo, el símbolo x está
+enlazado a 5 usando let. Cuando el evaluador resuelve x, resuelve el
+símbolo x al valor 5:
+
+#+begin_src clojure
+(let [x 5]
+  (+ x 3))
+; => 8
+#+end_src
+
+Ahora, si creamos una asignación de namespace de x a 15,
+Clojure lo resuelve en consecuencia:
+
+#+begin_src clojure
+(def x 15)
+(+ x 3)
+; => 18
+#+end_src
+
+En el siguiente ejemplo, x se asigna a 15, pero introducimos una
+asociación local de x a 5 usando let. Entonces x se resuelve a 5:
+
+#+begin_src clojure
+(def x 15)
+(let [x 5]
+  (+ x 3))
+; => 8
+#+end_src
+
+* Símbolos
+
+Puede anidar asociaciones, en cuyo caso tendrá prioridad la asociación
+definida más internamente:
+
+#+begin_src clojure
+(let [x 5]
+  (let [x 6]
+    (+ x 3)))
+; => 9
+#+end_src
+
+Las funciones también crean asociaciones locales, asociando parámetros a
+argumentos dentro del cuerpo de la función. En el siguiente ejemplo,
+exclaim se asigna a una función. Dentro del cuerpo de la función, el
+parámetro nombrado exclaim está vinculada al argumento pasado a la
+función:
+
+#+begin_src clojure
+(defn exclaim
+  [exclamation]
+  (str exclamation "!"))
+
+(exclaim "Hadoken")
+; => "Hadoken!"
+#+end_src
+
+* Listas
+
+Si la estructura de datos es una lista vacía, se evalúa como una lista
+vacía:
+
+#+begin_src clojure
+(eval (read-string "()"))
+; => ()
+#+end_src
+
+
+De lo contrario, se evalúa como una llamada al primer elemento de la
+lista. La forma en que se realiza la llamada depende de la naturaleza
+de ese primer elemento.
